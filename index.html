@@ -103,7 +103,7 @@ footer { margin-top: 3rem; font-size: .8rem; color: var(--muted); }
 
   q.addEventListener('input', render);
 
-  fetch('materials.json')
+  fetch('materials.json', { cache: 'no-cache' })
     .then(function (r) { return r.json(); })
     .then(function (data) {
       items = data.slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; });

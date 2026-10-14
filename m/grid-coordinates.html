@@ -1,0 +1,287 @@
+<!doctype html><html lang="ja"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><title>マス目の座標 - C言語 参考資料</title><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* layout concept: graph-paper figure on the left, a settings and formula panel on the right; the colored strips along the top and left edges decompose the coordinate into the same four terms used in the formula */
+:root {
+  --bg: #F2F5F8;
+  --surface: #FFFFFF;
+  --fg: #1B2733;
+  --muted: #5B6B7B;
+  --line: #CBD5DF;
+  --c-gray: #6B7A89;
+  --c-blue: #3558C9;
+  --c-amber: #B86A00;
+  --c-teal: #0B7A85;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10161D;
+    --surface: #18212B;
+    --fg: #E6EDF3;
+    --muted: #93A3B3;
+    --line: #2C3946;
+    --c-gray: #8C9BAA;
+    --c-blue: #85A0F5;
+    --c-amber: #F0A94B;
+    --c-teal: #3CC2CE;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10161D;
+  --surface: #18212B;
+  --fg: #E6EDF3;
+  --muted: #93A3B3;
+  --line: #2C3946;
+  --c-gray: #8C9BAA;
+  --c-blue: #85A0F5;
+  --c-amber: #F0A94B;
+  --c-teal: #3CC2CE;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); line-height: 1.7; padding-inline: 16px; padding-block: 24px 40px; }
+.wrap { max-width: 1040px; margin-inline: auto; }
+h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 4px; text-wrap: balance; }
+.lead { margin: 0 0 20px; color: var(--muted); max-width: 40em; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+.fig { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; min-width: 0; }
+.fig svg { display: block; width: 100%; height: auto; touch-action: manipulation; cursor: crosshair; }
+.cell { fill: none; stroke: var(--line); stroke-width: 1; }
+.cell.sel { fill: var(--c-blue); fill-opacity: .12; stroke: var(--c-blue); }
+.sq { fill: var(--c-teal); fill-opacity: .2; stroke: var(--c-teal); stroke-width: 1; }
+.sq.sel { fill-opacity: 1; }
+.guide { stroke: var(--fg); stroke-opacity: .55; stroke-width: 1; stroke-dasharray: 3 3; }
+.val { font-family: var(--font-mono); font-size: 11px; font-weight: 500; fill: var(--fg); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 4px 0; font-size: .82rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
+.legend i.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--fg); }
+.probe { margin: 8px 4px 0; font-family: var(--font-mono); font-size: .8rem; color: var(--muted); min-height: 1.7em; overflow-wrap: anywhere; }
+.panel { display: grid; gap: 16px; min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+.card h2 { font-size: .95rem; font-weight: 700; margin: 0 0 10px; }
+.ctl { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; align-items: center; margin-bottom: 8px; }
+.ctl label { font-size: .88rem; }
+.ctl label code, .eq .k { font-family: var(--font-mono); font-size: .85em; }
+.ctl output { font-family: var(--font-mono); font-size: .88rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.ctl input { grid-column: 1 / -1; width: 100%; accent-color: var(--c-teal); margin: 2px 0 0; }
+.ctl input:focus-visible { outline: 2px solid var(--c-teal); outline-offset: 3px; }
+.sub { margin: 12px 0 8px; font-size: .78rem; font-weight: 500; color: var(--muted); }
+.sub:first-of-type { margin-top: 0; }
+.eq { font-family: var(--font-mono); font-size: .86rem; line-height: 1.9; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.eq .g { color: var(--c-gray); font-weight: 500; }
+.eq .b { color: var(--c-blue); font-weight: 500; }
+.eq .a { color: var(--c-amber); font-weight: 500; }
+.eq .t { color: var(--c-teal); font-weight: 500; }
+.eq strong { font-weight: 500; }
+.eq.num { margin-bottom: 4px; }
+.code { margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: var(--bg); font-family: var(--font-mono); font-size: .84rem; overflow-wrap: anywhere; }
+.note { margin: 20px 0 0; font-size: .86rem; color: var(--muted); max-width: 46em; }
+.back { display: inline-block; margin-bottom: 12px; font-family: var(--font-mono); font-size: .8rem; color: var(--c-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+@media (max-width: 860px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+</style>
+
+<div class="wrap">
+  <a class="back" href="../index.html">← 資料一覧へ</a>
+  <h1>マス目の座標</h1>
+  <p class="lead">マスの列と行の番号から、そのマスの中に描く正方形の左上の座標を求めます。マスをクリックするか、右のスライダーを動かして確かめられます。</p>
+
+  <div class="layout">
+    <div class="fig">
+      <svg id="fig" viewBox="0 0 704 460" role="img" aria-label="6列4行のマス目に正方形を描いた図。選んだマスの正方形の始点 (x1, y1) と終点 (x2, y2) の座標を示し、始点の内訳を上と左の帯で示す。"></svg>
+      <div class="legend">
+        <span><i class="dot"></i>原点 (0, 0) は左上</span>
+        <span><i class="dot"></i>始点 (x1, y1) と終点 (x2, y2)</span>
+        <span><i style="background:var(--c-gray)"></i>マス目の開始位置</span>
+        <span><i style="background:var(--c-blue)"></i>番号 × マスの大きさ</span>
+        <span><i style="background:var(--c-amber)"></i>マス内の余白</span>
+        <span><i style="background:var(--c-teal)"></i>正方形</span>
+      </div>
+      <div class="probe" id="probe" aria-live="off"></div>
+    </div>
+
+    <div class="panel">
+      <div class="card">
+        <h2>設定</h2>
+        <div class="sub">どのマスか(番号は0から)</div>
+        <div class="ctl"><label for="col">列 <code>col</code></label><output id="o-col" for="col"></output><input id="col" type="range" min="0" max="5" step="1" value="2"></div>
+        <div class="ctl"><label for="row">行 <code>row</code></label><output id="o-row" for="row"></output><input id="row" type="range" min="0" max="3" step="1" value="1"></div>
+        <div class="sub">マス目のつくり</div>
+        <div class="ctl"><label for="gx">左の余白 <code>gx</code></label><output id="o-gx" for="gx"></output><input id="gx" type="range" min="0" max="56" step="4" value="24"></div>
+        <div class="ctl"><label for="gy">上の余白 <code>gy</code></label><output id="o-gy" for="gy"></output><input id="gy" type="range" min="0" max="64" step="4" value="24"></div>
+        <div class="ctl"><label for="cs">マスの大きさ <code>c</code></label><output id="o-cs" for="cs"></output><input id="cs" type="range" min="40" max="80" step="4" value="64"></div>
+        <div class="ctl"><label for="s">正方形の大きさ <code>s</code></label><output id="o-s" for="s"></output><input id="s" type="range" min="8" max="64" step="4" value="40"></div>
+      </div>
+
+      <div class="card">
+        <h2>DrawBoxの引数</h2>
+        <div class="eq"><span class="k">x1</span> = <span class="g">gx</span> + <span class="b">col × c</span> + <span class="a">(c − s) ÷ 2</span></div>
+        <div class="eq"><span class="k">y1</span> = <span class="g">gy</span> + <span class="b">row × c</span> + <span class="a">(c − s) ÷ 2</span></div>
+        <div class="eq"><span class="k">x2</span> = <span class="k">x1</span> + s,&nbsp; <span class="k">y2</span> = <span class="k">y1</span> + s</div>
+        <div class="sub">いまの値で計算すると</div>
+        <div class="eq num" id="fx"></div>
+        <div class="eq num" id="fy"></div>
+        <div class="eq num" id="fx2"></div>
+        <div class="code" id="code"></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="note">DrawBoxには左上 (x1, y1) と右下 (x2, y2) を渡します。塗りつぶしでは右端と下端の座標は含まれないため、x2 = x1 + s、y2 = y1 + s とすると、ちょうど s × s ピクセルの正方形になります。正方形をマスの中央に置くので、マスの左上から (c − s) ÷ 2 だけ内側にずらしています。マスの左上へ合わせたいときは、この余白の項を 0 にします。</p>
+</div>
+
+<script>
+(function () {
+  var W = 560, H = 384, SX = 76, SY = 44, COLS = 6, ROWS = 4;
+  var st = { gx: 24, gy: 24, cs: 64, s: 40, col: 2, row: 1 };
+  var keys = ['gx', 'gy', 'cs', 's', 'col', 'row'];
+  var svg = document.getElementById('fig');
+  var inp = {}, out = {};
+
+  keys.forEach(function (k) {
+    inp[k] = document.getElementById(k);
+    out[k] = document.getElementById('o-' + k);
+    inp[k].addEventListener('input', function () {
+      st[k] = +inp[k].value;
+      if (k === 'cs' && st.s > st.cs) st.s = st.cs;
+      sync();
+      render();
+    });
+  });
+
+  function sync() {
+    inp.s.max = st.cs;
+    keys.forEach(function (k) {
+      inp[k].value = st[k];
+      out[k].textContent = st[k];
+    });
+  }
+
+  function toLocal(e) {
+    var pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    var p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    return { x: Math.round(p.x - SX), y: Math.round(p.y - SY) };
+  }
+
+  function cellAt(p) {
+    var c = Math.floor((p.x - st.gx) / st.cs);
+    var r = Math.floor((p.y - st.gy) / st.cs);
+    if (p.x < 0 || p.y < 0 || p.x > W || p.y > H) return null;
+    if (c < 0 || c >= COLS || r < 0 || r >= ROWS) return { c: c, r: r, inside: false };
+    return { c: c, r: r, inside: true };
+  }
+
+  svg.addEventListener('pointerdown', function (e) {
+    var hit = cellAt(toLocal(e));
+    if (hit && hit.inside) {
+      st.col = hit.c;
+      st.row = hit.r;
+      sync();
+      render();
+    }
+  });
+
+  svg.addEventListener('pointermove', function (e) {
+    var p = toLocal(e);
+    var hit = cellAt(p);
+    var el = document.getElementById('probe');
+    if (!hit) { el.textContent = defaultProbe; return; }
+    var base = 'ポインタ (' + p.x + ', ' + p.y + ') → ';
+    if (hit.inside) {
+      el.textContent = base + '列 = floor((' + p.x + ' − ' + st.gx + ') ÷ ' + st.cs + ') = ' + hit.c +
+        ',  行 = floor((' + p.y + ' − ' + st.gy + ') ÷ ' + st.cs + ') = ' + hit.r;
+    } else {
+      el.textContent = base + 'マス目の外';
+    }
+  });
+  svg.addEventListener('pointerleave', function () {
+    document.getElementById('probe').textContent = defaultProbe;
+  });
+
+  var defaultProbe = 'キャンバスの上にポインタを置くと、座標からマスの番号を逆算します。';
+
+  function render() {
+    var gx = st.gx, gy = st.gy, cs = st.cs, s = st.s, col = st.col, row = st.row;
+    var pad = (cs - s) / 2;
+    var X = gx + col * cs + pad;
+    var Y = gy + row * cs + pad;
+    var cells = '', sqs = '', selSq = '';
+    var r, c;
+
+    for (r = 0; r < ROWS; r++) {
+      for (c = 0; c < COLS; c++) {
+        var x = SX + gx + c * cs, y = SY + gy + r * cs;
+        var sel = (r === row && c === col);
+        cells += '<rect class="cell' + (sel ? ' sel' : '') + '" x="' + x + '" y="' + y + '" width="' + cs + '" height="' + cs + '"/>';
+        var q = '<rect class="sq' + (sel ? ' sel' : '') + '" x="' + (x + pad) + '" y="' + (y + pad) + '" width="' + s + '" height="' + s + '"/>';
+        if (sel) selSq = q; else sqs += q;
+      }
+    }
+
+    var xs = [
+      [0, gx, 'var(--c-gray)'],
+      [gx, col * cs, 'var(--c-blue)'],
+      [gx + col * cs, pad, 'var(--c-amber)'],
+      [X, s, 'var(--c-teal)']
+    ];
+    var ys = [
+      [0, gy, 'var(--c-gray)'],
+      [gy, row * cs, 'var(--c-blue)'],
+      [gy + row * cs, pad, 'var(--c-amber)'],
+      [Y, s, 'var(--c-teal)']
+    ];
+    var bars = '';
+    xs.forEach(function (a) {
+      if (a[1] > 0) bars += '<rect x="' + (SX + a[0]) + '" y="20" width="' + a[1] + '" height="12" fill="' + a[2] + '"/>';
+    });
+    ys.forEach(function (a) {
+      if (a[1] > 0) bars += '<rect x="56" y="' + (SY + a[0]) + '" width="12" height="' + a[1] + '" fill="' + a[2] + '"/>';
+    });
+
+    var late = (SX + X) > (SX + W - 90);
+    var xlabel = '<text class="val" x="' + (late ? SX + X + s : SX + X) + '" y="14" text-anchor="' + (late ? 'end' : 'start') + '">x1 = ' + X + '</text>';
+    var ylabel = '<text class="val" x="0" y="' + (SY + Y + 4) + '">y1 = ' + Y + '</text>';
+
+    var ex = SX + X + s, ey = SY + Y + s;
+    var guides2 =
+      '<line class="guide" x1="' + ex + '" y1="' + ey + '" x2="' + ex + '" y2="' + (SY + H + 4) + '"/>' +
+      '<line class="guide" x1="' + ex + '" y1="' + ey + '" x2="' + (SX + W + 4) + '" y2="' + ey + '"/>';
+    var x2label = '<text class="val" x="' + ex + '" y="' + (SY + H + 18) + '" text-anchor="middle">x2 = ' + (X + s) + '</text>';
+    var y2label = '<text class="val" x="' + (SX + W + 8) + '" y="' + (ey + 4) + '">y2 = ' + (Y + s) + '</text>';
+
+    var guides =
+      '<line class="guide" x1="' + (SX + X) + '" y1="32" x2="' + (SX + X) + '" y2="' + (SY + Y) + '"/>' +
+      '<line class="guide" x1="68" y1="' + (SY + Y) + '" x2="' + (SX + X) + '" y2="' + (SY + Y) + '"/>';
+
+    svg.innerHTML =
+      '<rect x="' + SX + '" y="' + SY + '" width="' + W + '" height="' + H + '" fill="var(--surface)" stroke="var(--line)"/>' +
+      cells + sqs + selSq + guides + guides2 + bars + xlabel + ylabel + x2label + y2label +
+      '<circle cx="' + (SX + X) + '" cy="' + (SY + Y) + '" r="3" fill="var(--fg)"/>' +
+      '<circle cx="' + (SX + X + s) + '" cy="' + (SY + Y + s) + '" r="3" fill="var(--fg)"/>' +
+      '<circle cx="' + SX + '" cy="' + SY + '" r="4" fill="var(--fg)"/>';
+
+    document.getElementById('fx').innerHTML =
+      '<span class="k">x1</span> = <span class="g">' + gx + '</span> + <span class="b">' + col + ' × ' + cs + '</span> + <span class="a">(' + cs + ' − ' + s + ') ÷ 2</span> = <strong class="t">' + X + '</strong>';
+    document.getElementById('fy').innerHTML =
+      '<span class="k">y1</span> = <span class="g">' + gy + '</span> + <span class="b">' + row + ' × ' + cs + '</span> + <span class="a">(' + cs + ' − ' + s + ') ÷ 2</span> = <strong class="t">' + Y + '</strong>';
+    document.getElementById('fx2').innerHTML =
+      '<span class="k">x2</span> = ' + X + ' + ' + s + ' = <strong class="t">' + (X + s) + '</strong><br>' +
+      '<span class="k">y2</span> = ' + Y + ' + ' + s + ' = <strong class="t">' + (Y + s) + '</strong><br>' +
+      '始点 (' + X + ', ' + Y + ') → 終点 (' + (X + s) + ', ' + (Y + s) + ')';
+    document.getElementById('code').textContent = 'DrawBox(' + X + ', ' + Y + ', ' + (X + s) + ', ' + (Y + s) + ', color, TRUE);';
+  }
+
+  document.getElementById('probe').textContent = defaultProbe;
+  sync();
+  render();
+})();
+</script>
+
+</body></html>

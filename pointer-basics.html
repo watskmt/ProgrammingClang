@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ポインタ入門 - C言語 参考資料</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f7f8f6;
+  --fg: #1b2420;
+  --muted: #5d6a64;
+  --line: #d9dfdb;
+  --accent: #0b6b57;
+  --accent-soft: #e1f0eb;
+  --code-bg: #eef2ef;
+  --warn: #9a3b12;
+  --warn-soft: #fbece4;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121715; --fg: #e4ebe7; --muted: #93a39b; --line: #2a3430;
+    --accent: #4cc9a7; --accent-soft: #1b2b26; --code-bg: #1a221f;
+    --warn: #f0a37c; --warn-soft: #2e201a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121715; --fg: #e4ebe7; --muted: #93a39b; --line: #2a3430;
+  --accent: #4cc9a7; --accent-soft: #1b2b26; --code-bg: #1a221f;
+  --warn: #f0a37c; --warn-soft: #2e201a; color-scheme: dark;
+}
+html { margin: 0; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.85; }
+.wrap { max-width: 44rem; margin-inline: auto; padding-inline: 1rem; padding-block: 1.5rem 4rem; }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.back { font-family: var(--font-mono); font-size: .8rem; text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: clamp(1.6rem, 5vw, 2.1rem); line-height: 1.3; margin: 1rem 0 .4rem; text-wrap: balance; }
+.meta { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); margin: 0 0 1.5rem; }
+h2 { font-size: 1.25rem; margin: 2.8rem 0 .6rem; padding-top: .4rem; border-top: 1px solid var(--line); text-wrap: balance; }
+p { margin: .8rem 0; }
+code { font-family: var(--font-mono); font-size: .88em; background: var(--code-bg); padding: .1em .35em; border-radius: 4px; }
+.code { position: relative; margin: 1rem 0; }
+.code pre { margin: 0; overflow-x: auto; background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: 2.2rem 1rem 1rem; }
+.code pre code { background: none; padding: 0; font-size: .85rem; line-height: 1.65; }
+.code .lang { position: absolute; top: .5rem; left: 1rem; font-family: var(--font-mono); font-size: .7rem; color: var(--muted); letter-spacing: .06em; }
+.code button { position: absolute; top: .4rem; right: .5rem; font: inherit; font-size: .75rem; padding: .15rem .6rem; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--fg); cursor: pointer; }
+.out { margin: -.4rem 0 1rem; }
+.out pre { margin: 0; overflow-x: auto; border-left: 3px solid var(--accent); background: var(--accent-soft); padding: .7rem 1rem; border-radius: 0 6px 6px 0; }
+.out pre code { background: none; padding: 0; font-size: .82rem; line-height: 1.6; }
+.out .label { font-family: var(--font-mono); font-size: .7rem; color: var(--muted); letter-spacing: .06em; margin: 0 0 .2rem; }
+.tablebox { overflow-x: auto; margin: 1rem 0; }
+table { border-collapse: collapse; width: 100%; min-width: 30rem; font-size: .92rem; }
+th, td { text-align: left; padding: .6rem .8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: .78rem; color: var(--muted); font-weight: 500; letter-spacing: .04em; }
+.note { background: var(--warn-soft); border-left: 3px solid var(--warn); padding: .7rem 1rem; border-radius: 0 6px 6px 0; margin: 1rem 0; font-size: .94rem; }
+.note b { color: var(--warn); }
+footer { margin-top: 3.5rem; padding-top: 1rem; border-top: 1px solid var(--line); font-size: .8rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../index.html">← 資料一覧へ</a>
+  <h1>ポインタ入門</h1>
+  <p class="meta">2026-10-14 / 前提: 変数・printf・関数の基本</p>
+
+  <p>ポインタは「変数のアドレス(メモリ上の場所)を入れておく変数」です。まず用語を2つだけ覚えます。</p>
+
+  <div class="tablebox">
+    <table>
+      <thead><tr><th>書き方</th><th>意味</th><th>読み方</th></tr></thead>
+      <tbody>
+        <tr><td><code>&amp;x</code></td><td>変数 <code>x</code> のアドレスを求める</td><td>アドレス演算子</td></tr>
+        <tr><td><code>int *p</code></td><td><code>int</code> 変数のアドレスを入れる変数 <code>p</code> を宣言する</td><td>ポインタ宣言</td></tr>
+        <tr><td><code>*p</code></td><td><code>p</code> が指す先の変数そのもの</td><td>間接参照演算子</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>1. アドレスと間接参照</h2>
+  <p><code>p</code> に <code>x</code> のアドレスを入れると、<code>*p</code> を通して <code>x</code> を読み書きできます。</p>
+
+  <div class="code">
+    <span class="lang">C</span><button type="button" data-copy>コピー</button>
+<pre><code>#include &lt;stdio.h&gt;
+
+int main(void) {
+    int x = 42;
+    int *p = &amp;x;
+
+    printf("x の値      : %d\n", x);
+    printf("x のアドレス: %p\n", (void *)&amp;x);
+    printf("p の値      : %p\n", (void *)p);
+    printf("*p の値     : %d\n", *p);
+
+    *p = 100;              // x を書き換える
+    printf("x = %d\n", x); // 100
+    return 0;
+}</code></pre>
+  </div>
+  <div class="out">
+    <p class="label">実行例(アドレスは実行のたびに変わります)</p>
+<pre><code>x の値      : 42
+x のアドレス: 0x7ffde8b44650
+p の値      : 0x7ffde8b44650
+*p の値     : 42
+x = 100</code></pre>
+  </div>
+  <p><code>x のアドレス</code> と <code>p の値</code> が同じになる点を確認してください。<code>%p</code> には <code>void *</code> を渡すのが決まりです。</p>
+
+  <h2>2. 関数で呼び出し元の変数を書き換える</h2>
+  <p>C言語の関数引数は値のコピーです。呼び出し元の変数を変えたいときは、アドレスを渡します。</p>
+
+  <div class="code">
+    <span class="lang">C</span><button type="button" data-copy>コピー</button>
+<pre><code>#include &lt;stdio.h&gt;
+
+void swap(int *a, int *b) {
+    int tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
+int main(void) {
+    int m = 3, n = 5;
+    swap(&amp;m, &amp;n);
+    printf("m = %d, n = %d\n", m, n);
+    return 0;
+}</code></pre>
+  </div>
+  <div class="out">
+    <p class="label">実行結果</p>
+<pre><code>m = 5, n = 3</code></pre>
+  </div>
+
+  <h2>3. 配列とポインタ</h2>
+  <p>式の中で配列名 <code>a</code> は、先頭要素 <code>&amp;a[0]</code> のアドレスとして扱われます。<code>p + i</code> は「<code>i</code> 要素先」を指し、<code>*(p + i)</code> は <code>a[i]</code> と同じ要素です。</p>
+
+  <div class="code">
+    <span class="lang">C</span><button type="button" data-copy>コピー</button>
+<pre><code>int a[3] = {10, 20, 30};
+int *q = a;   // &amp;a[0] と同じ
+
+for (int i = 0; i &lt; 3; i++) {
+    printf("a[%d] = %d, *(q + %d) = %d\n", i, a[i], i, *(q + i));
+}</code></pre>
+  </div>
+  <div class="out">
+    <p class="label">実行結果</p>
+<pre><code>a[0] = 10, *(q + 0) = 10
+a[1] = 20, *(q + 1) = 20
+a[2] = 30, *(q + 2) = 30</code></pre>
+  </div>
+  <p><code>q + 1</code> はアドレスが 1 バイト進むのではなく、<code>sizeof(int)</code> バイト進みます。</p>
+
+  <h2>4. NULL と初期化</h2>
+  <p>どこも指していないポインタには <code>NULL</code> を入れ、使う前に確認します。</p>
+
+  <div class="code">
+    <span class="lang">C</span><button type="button" data-copy>コピー</button>
+<pre><code>int *r = NULL;
+if (r != NULL) {
+    printf("%d\n", *r);
+} else {
+    printf("r は NULL です\n");
+}</code></pre>
+  </div>
+
+  <div class="note"><b>よくある間違い</b></div>
+  <div class="tablebox">
+    <table>
+      <thead><tr><th>間違い</th><th>起きること</th><th>対策</th></tr></thead>
+      <tbody>
+        <tr><td><code>int *p; *p = 1;</code></td><td>未初期化のポインタ経由で書き込み、異常終了や不具合の原因になる</td><td>宣言時に <code>NULL</code> か有効なアドレスを入れる</td></tr>
+        <tr><td>関数内のローカル変数のアドレスを <code>return</code> する</td><td>関数終了後にその領域は無効になる</td><td>呼び出し側の変数を受け取る、または動的確保を使う</td></tr>
+        <tr><td><code>NULL</code> を <code>*</code> で参照する</td><td>実行時エラー(セグメンテーション違反など)</td><td>参照前に <code>!= NULL</code> を確認する</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>確認問題</h2>
+  <p>1. <code>int a = 1, b = 2; int *p = &amp;a; *p = b;</code> の後、<code>a</code> の値はいくつですか。<br>
+     2. 上の <code>swap</code> を、引数を <code>int a, int b</code>(値渡し)にして書き換えると、呼び出し元では何が起きますか。</p>
+
+  <footer>© 講義担当者 / CC BY 4.0 ・ サンプルコードは MIT License</footer>
+</div>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var code = btn.parentElement.querySelector('code');
+    function done(ok) {
+      btn.textContent = ok ? 'コピーしました' : '選択しました';
+      setTimeout(function () { btn.textContent = 'コピー'; }, 1500);
+    }
+    try {
+      navigator.clipboard.writeText(code.innerText).then(function () { done(true); }, fallback);
+    } catch (e) { fallback(); }
+    function fallback() {
+      var r = document.createRange(); r.selectNodeContents(code);
+      var s = getSelection(); s.removeAllRanges(); s.addRange(r); done(false);
+    }
+  });
+});
+</script>
+</body>
+</html>

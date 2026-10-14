@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DXライブラリ用テンプレートの導入と使い方 - C言語 参考資料</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+:root {
+  --bg: #F2F5F8;
+  --surface: #FFFFFF;
+  --fg: #1B2733;
+  --muted: #5B6B7B;
+  --line: #CBD5DF;
+  --blue: #3558C9;
+  --teal: #0B7A85;
+  --amber: #B86A00;
+  --code-bg: #EAEFF4;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10161D; --surface: #18212B; --fg: #E6EDF3; --muted: #93A3B3; --line: #2C3946;
+    --blue: #85A0F5; --teal: #3CC2CE; --amber: #F0A94B; --code-bg: #0C1218;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10161D; --surface: #18212B; --fg: #E6EDF3; --muted: #93A3B3; --line: #2C3946;
+  --blue: #85A0F5; --teal: #3CC2CE; --amber: #F0A94B; --code-bg: #0C1218;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); line-height: 1.75; padding: 24px 16px 48px; }
+.wrap { max-width: 760px; margin-inline: auto; }
+.back { display: inline-block; margin-bottom: 12px; font-family: var(--font-mono); font-size: .8rem; color: var(--blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 6px; text-wrap: balance; line-height: 1.4; }
+.lead { margin: 0 0 20px; color: var(--muted); }
+h2 { font-size: 1.15rem; font-weight: 700; margin: 36px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+h3 { font-size: 1rem; font-weight: 700; margin: 0 0 6px; }
+p { margin: 0 0 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin: 0 0 14px; min-width: 0; }
+.dl { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
+.dl .meta { font-size: .86rem; color: var(--muted); }
+.btn { display: inline-block; padding: 9px 16px; border-radius: 8px; background: var(--blue); color: #fff; text-decoration: none; font-weight: 700; }
+:root[data-theme="dark"] .btn { color: #10161D; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn { color: #10161D; } }
+.btn:focus-visible, .copy:focus-visible, summary:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
+ol.steps { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+ol.steps > li { counter-increment: s; position: relative; padding-left: 40px; margin-bottom: 16px; }
+ol.steps > li::before { content: counter(s); position: absolute; left: 0; top: 2px; width: 28px; height: 28px; border-radius: 50%; background: var(--teal); color: #fff; font-family: var(--font-mono); font-weight: 500; text-align: center; line-height: 28px; font-size: .85rem; }
+:root[data-theme="dark"] ol.steps > li::before { color: #10161D; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) ol.steps > li::before { color: #10161D; } }
+code { font-family: var(--font-mono); font-size: .88em; background: var(--code-bg); padding: 1px 6px; border-radius: 4px; overflow-wrap: anywhere; }
+.codebox { position: relative; margin: 8px 0 12px; }
+pre { margin: 0; padding: 12px 14px; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; font-family: var(--font-mono); font-size: .84rem; line-height: 1.6; tab-size: 4; }
+pre code { background: none; padding: 0; font-size: inherit; overflow-wrap: normal; }
+.copy { position: absolute; top: 6px; right: 6px; padding: 3px 10px; font: 500 .74rem var(--font-mono); color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
+.copy:hover { border-color: var(--teal); }
+.codebox pre { padding-right: 70px; }
+.codebox.tall pre { padding-right: 14px; padding-top: 36px; }
+.note { border-left: 3px solid var(--amber); padding: 6px 12px; margin: 0 0 14px; color: var(--muted); font-size: .9rem; background: var(--surface); border-radius: 0 8px 8px 0; }
+.note b { color: var(--fg); }
+table { width: 100%; border-collapse: collapse; font-size: .88rem; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { width: 9em; font-weight: 500; color: var(--muted); white-space: nowrap; }
+tr:last-child th, tr:last-child td { border-bottom: 0; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
+summary { cursor: pointer; font-weight: 500; }
+details p { margin: 8px 0 0; color: var(--muted); font-size: .92rem; }
+footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--line); font-size: .8rem; color: var(--muted); }
+@media (max-width: 520px) { th { width: auto; white-space: normal; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../index.html">← 資料一覧へ</a>
+  <h1>DXライブラリ用テンプレートの導入と使い方</h1>
+  <p class="lead">Visual Studio 2022 で DXライブラリのプロジェクトを、新規作成するだけで使えるようにするテンプレートです。インクルードパスやライブラリパス、ランタイムの設定は済んでいます。</p>
+
+  <div class="card dl">
+    <div>
+      <strong>DxLibProject_VS2022.zip</strong>
+      <div class="meta">プロジェクト テンプレート(約9KB)。展開せず、zip のまま使います。</div>
+    </div>
+    <a class="btn" href="../files/DxLibProject_VS2022.zip" download>zip をダウンロード</a>
+  </div>
+
+  <h2>前提</h2>
+  <p>次の2つが必要です。テンプレートには DXライブラリ本体は含まれていないため、別にダウンロードします。</p>
+  <ul>
+    <li><strong>Visual Studio 2022</strong>:インストーラーで「C++ によるデスクトップ開発」を入れておきます(Windows SDK も一緒に入ります)。</li>
+    <li><strong>DXライブラリ</strong>:<a href="https://dxlib.xsrv.jp/dxdload.html" target="_blank" rel="noopener">DXライブラリ置き場</a>の「Windows版 VisualStudio(C++)用」(Ver3.25a)をダウンロードして解凍します。</li>
+  </ul>
+
+  <h2>導入手順(初回のみ)</h2>
+  <ol class="steps">
+    <li>
+      <h3>DXライブラリを <code>C:\DxLib_VC</code> に置く</h3>
+      <p>解凍したフォルダーの名前を <code>DxLib_VC</code> にして、<code>C:\</code> の直下に置きます。次のフォルダーが存在すれば正解です。</p>
+      <div class="codebox"><pre><code>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用</code></pre><button class="copy" type="button">コピー</button></div>
+      <p class="note"><b>別の場所に置きたいとき</b>:テンプレートは上のパスを前提にしています。置き場所を変えた場合は、あとの「つまずいたとき」を見てください。</p>
+    </li>
+    <li>
+      <h3>テンプレートの zip を所定のフォルダーに置く</h3>
+      <p>zip は<strong>展開せずに</strong>、そのまま次のフォルダーへコピーします。</p>
+      <div class="codebox"><pre><code>%USERPROFILE%\Documents\Visual Studio 2022\Templates\ProjectTemplates</code></pre><button class="copy" type="button">コピー</button></div>
+      <p class="note"><b>フォルダーが見つからないとき</b>:Documents が OneDrive に移っていると、場所が違うことがあります。Visual Studio の <strong>ツール → オプション → プロジェクトおよびソリューション → 場所</strong> にある「ユーザー プロジェクト テンプレートの場所」で、実際のフォルダーを確認できます。</p>
+    </li>
+    <li>
+      <h3>Visual Studio を再起動する</h3>
+      <p>起動中だった場合は、いったん終了して開き直します。</p>
+    </li>
+    <li>
+      <h3>表示されないときだけ、キャッシュを更新する</h3>
+      <p>スタートメニューから「Developer Command Prompt for VS 2022」を<strong>管理者として実行</strong>し、次のコマンドを入力します。</p>
+      <div class="codebox"><pre><code>devenv /installvstemplates</code></pre><button class="copy" type="button">コピー</button></div>
+      <p>終わったら Visual Studio をもう一度起動します。</p>
+    </li>
+  </ol>
+
+  <h2>使い方</h2>
+  <ol class="steps">
+    <li>
+      <h3>新しいプロジェクトを作る</h3>
+      <p>起動画面の <strong>新しいプロジェクトの作成</strong> を選び、検索ボックスに「DXライブラリ」と入力します。「DXライブラリ プロジェクト」を選んで「次へ」を押します。</p>
+    </li>
+    <li>
+      <h3>名前と場所を決める</h3>
+      <p>プロジェクト名と保存場所を入力して「作成」を押します。プロジェクト名は、実行したときのウィンドウのタイトルにも使われます。</p>
+    </li>
+    <li>
+      <h3>構成とプラットフォームを選ぶ</h3>
+      <p>ツールバーで構成を <strong>Debug</strong>、プラットフォームを <strong>x64</strong> にします(x86 でも動きます)。</p>
+    </li>
+    <li>
+      <h3>実行して確かめる</h3>
+      <p><code>F5</code> キーで実行します。1280×720 のウィンドウの中央に青い四角が出て、左上に「ESCで終了」と表示されれば成功です。ESC キーで閉じます。</p>
+    </li>
+    <li>
+      <h3><code>main.cpp</code> に書き足す</h3>
+      <p>自動で開く <code>main.cpp</code> の、「初期化処理」「更新処理」「描画処理」の枠に処理を書いていきます。</p>
+    </li>
+  </ol>
+
+  <h2>最初から入っているコード(<code>main.cpp</code>)</h2>
+  <p>ゲームでよく使う流れ(初期化、毎フレームの更新と描画、終了処理)が、すでに書かれています。</p>
+  <div class="codebox tall"><button class="copy" type="button">コピー</button><pre><code>#include "DxLib.h"
+
+namespace
+{
+    constexpr int kScreenWidth  = 1280;
+    constexpr int kScreenHeight = 720;
+    constexpr int kColorBit     = 32;
+}
+
+int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
+{
+    // ログファイル(Log.txt)を出力しない
+    SetOutApplicationLogValidFlag(FALSE);
+
+    // ウィンドウモード / 画面サイズ / タイトル
+    ChangeWindowMode(TRUE);
+    SetGraphMode(kScreenWidth, kScreenHeight, kColorBit);
+    SetMainWindowText("プロジェクト名");
+
+    // 非アクティブ時も処理を続ける
+    SetAlwaysRunFlag(TRUE);
+
+    if (DxLib_Init() == -1)
+    {
+        return -1;
+    }
+
+    // 描画先を裏画面に設定(ダブルバッファ)
+    SetDrawScreen(DX_SCREEN_BACK);
+
+    // ===== 初期化処理 =====
+
+
+    // ===== メインループ =====
+    while (ProcessMessage() == 0 &amp;&amp; CheckHitKey(KEY_INPUT_ESCAPE) == 0)
+    {
+        ClearDrawScreen();
+
+        // ----- 更新処理 -----
+
+
+        // ----- 描画処理 -----
+        // 画面中央に四角を描画 (左上x, 左上y, 右下x, 右下y, 色, 塗りつぶし)
+        constexpr int kBoxSize = 200;
+        const int left = (kScreenWidth  - kBoxSize) / 2;
+        const int top  = (kScreenHeight - kBoxSize) / 2;
+        DrawBox(left, top, left + kBoxSize, top + kBoxSize, GetColor(0, 160, 255), TRUE);
+
+        DrawString(10, 10, "ESCで終了", GetColor(255, 255, 255));
+
+        // 裏画面を表画面に反映(垂直同期待ち)
+        ScreenFlip();
+    }
+
+    // ===== 終了処理 =====
+    DxLib_End();
+
+    return 0;
+}</code></pre></div>
+  <p>覚えておくと便利な点が3つあります。</p>
+  <ul>
+    <li><code>SetDrawScreen(DX_SCREEN_BACK)</code> で裏画面に描き、<code>ScreenFlip()</code> で表に出します(ダブルバッファ)。ちらつきを防ぐための定番の書き方です。</li>
+    <li><code>while</code> の中の <code>ClearDrawScreen()</code> は、前のフレームの絵を消します。これを忘れると、前の絵が残り続けます。</li>
+    <li>画面サイズは、冒頭の <code>kScreenWidth</code> と <code>kScreenHeight</code> を変えるだけで変更できます。</li>
+  </ul>
+
+  <h2>テンプレートの設定内容</h2>
+  <table>
+    <tr><th>ツールセット</th><td>v143(Visual Studio 2022)</td></tr>
+    <tr><th>DxLib の場所</th><td><code>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用</code>(インクルードとライブラリの両方)</td></tr>
+    <tr><th>構成</th><td>Debug / Release × x86 / x64</td></tr>
+    <tr><th>文字セット</th><td>マルチバイト</td></tr>
+    <tr><th>ランタイム</th><td>Debug は /MTd、Release は /MT(静的リンク)</td></tr>
+    <tr><th>C++ の規格</th><td>C++20</td></tr>
+    <tr><th>出力先</th><td><code>ソリューションフォルダー\bin\プラットフォーム\構成\</code></td></tr>
+  </table>
+
+  <h2>つまずいたとき</h2>
+  <div class="card">
+    <h3>「DxLib.h を開けません」と出る</h3>
+    <p>DXライブラリの置き場所が <code>C:\DxLib_VC</code> になっていません。置き直すのが簡単です。置き場所を変えたいときは、プロジェクトを右クリックして「プロジェクトのアンロード」→「プロジェクトの編集」を選び、<code>.vcxproj</code> の中の <code>&lt;DxLibDir&gt;</code> の行を実際のパスに書き換えます。</p>
+  </div>
+  <div class="card">
+    <h3>テンプレートが一覧に出ない</h3>
+    <p>zip を展開していないか、フォルダーを間違えていないかを確認します。それでも出ないときは、導入手順の4番(<code>devenv /installvstemplates</code>)を試してください。</p>
+  </div>
+  <div class="card">
+    <h3>リンクエラーが出る</h3>
+    <p>DXライブラリの <code>.lib</code> は、x86 用と x64 用が別々です。ツールバーの x86 / x64 の選択と、置いたライブラリが合っているかを確認します。ランタイムや文字セットを変えた場合も、不一致の原因になります。</p>
+  </div>
+  <div class="card">
+    <h3>Visual Studio 2026 で使いたい</h3>
+    <p>このテンプレートはツールセットが v143 に固定されています。VS2026 のインストーラーで v143 ツールセット(VS2022 用の MSVC)を追加するか、プロジェクトのプロパティで新しいツールセットに変更します。環境によってはエラーが出ることがあるため、授業では VS2022 を使うのが確実です。</p>
+  </div>
+
+  <h2>確認問題</h2>
+  <details>
+    <summary>問1. テンプレートの zip は、展開してから置く?そのまま置く?</summary>
+    <p>展開せず、zip のまま <code>ProjectTemplates</code> フォルダーに置きます。展開した状態だと、Visual Studio がテンプレートとして認識しません。</p>
+  </details>
+  <details>
+    <summary>問2. ゲームのループの中で、<code>ClearDrawScreen()</code> を書き忘れるとどうなる?</summary>
+    <p>前のフレームで描いた絵が消されずに残るため、動かした物の軌跡が画面に残り続けます。</p>
+  </details>
+  <details>
+    <summary>問3. ビルドで「DxLib.h を開けません」と出た。まず何を確認する?</summary>
+    <p>DXライブラリのフォルダーが <code>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用</code> にあるかを確認します。別の場所に置いているなら、<code>.vcxproj</code> の <code>&lt;DxLibDir&gt;</code> を書き換えます。</p>
+  </details>
+
+  <footer>テンプレートの <code>main.cpp</code> は構文チェック済みです。DXライブラリ本体と Visual Studio を使った実機での動作は、この資料の作成環境では確かめていません。</footer>
+</div>
+
+<script>
+(function () {
+  var buttons = document.querySelectorAll('.copy');
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var box = b.parentNode;
+      var text = box.querySelector('pre').innerText.replace(/\n$/, '');
+      var done = function () {
+        b.textContent = 'コピーしました';
+        setTimeout(function () { b.textContent = 'コピー'; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+      } else {
+        fallback(text, done);
+      }
+    });
+  });
+  function fallback(text, done) {
+    var t = document.createElement('textarea');
+    t.value = text;
+    t.style.position = 'fixed';
+    t.style.opacity = '0';
+    document.body.appendChild(t);
+    t.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(t);
+  }
+})();
+</script>
+</body>
+</html>

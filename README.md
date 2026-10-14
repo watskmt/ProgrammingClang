@@ -8,6 +8,7 @@ C言語講義の参考資料を集めた静的サイトです。GitHub Pages で
 index.html        資料の一覧(materials.json を読み込んで表示・検索)
 materials.json    資料の一覧データ
 m/<slug>.html     各資料(1資料1ファイル)
+files/            資料からリンクする配布ファイル(zip など)
 .nojekyll         Jekyll 処理を無効にする空ファイル
 LICENSE           サンプルコードのライセンス(MIT)
 ```

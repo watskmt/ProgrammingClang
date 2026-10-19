@@ -10,8 +10,8 @@
     "slug": "grid-coordinates",
     "title": "マス目の座標",
     "tag": "描画",
-    "date": "2026-10-14",
-    "summary": "列と行の番号から、マスの中に描く正方形の座標(DrawBoxの引数)を求める。スライダーとクリックで確かめられる。"
+    "date": "2026-10-19",
+    "summary": "列と行の番号から、マスの中に描く正方形(DrawBox)と、マスの中心に描く円(DrawCircle)の座標を求める。スライダーとクリックで確かめられる。"
   },
   {
     "slug": "dxlib-vs2022-template",

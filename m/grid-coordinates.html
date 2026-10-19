@@ -14,6 +14,7 @@
   --c-blue: #3558C9;
   --c-amber: #B86A00;
   --c-teal: #0B7A85;
+  --c-violet: #8B3FA8;
   --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
@@ -28,6 +29,7 @@
     --c-blue: #85A0F5;
     --c-amber: #F0A94B;
     --c-teal: #3CC2CE;
+    --c-violet: #C79BE6;
     color-scheme: dark;
   }
 }
@@ -41,6 +43,7 @@
   --c-blue: #85A0F5;
   --c-amber: #F0A94B;
   --c-teal: #3CC2CE;
+  --c-violet: #C79BE6;
   color-scheme: dark;
 }
 body { background: var(--bg); color: var(--fg); font-family: var(--font-body); line-height: 1.7; padding-inline: 16px; padding-block: 24px 40px; }
@@ -77,6 +80,9 @@ h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 4px; text-wrap: balance; }
 .eq .b { color: var(--c-blue); font-weight: 500; }
 .eq .a { color: var(--c-amber); font-weight: 500; }
 .eq .t { color: var(--c-teal); font-weight: 500; }
+.eq .v { color: var(--c-violet); font-weight: 500; }
+.dc { fill: var(--c-violet); fill-opacity: .14; stroke: var(--c-violet); stroke-width: 1; }
+.dc.sel { fill-opacity: .85; stroke: var(--surface); stroke-width: 1.5; }
 .eq strong { font-weight: 500; }
 .eq.num { margin-bottom: 4px; }
 .code { margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: var(--bg); font-family: var(--font-mono); font-size: .84rem; overflow-wrap: anywhere; }
@@ -89,11 +95,11 @@ h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 4px; text-wrap: balance; }
 <div class="wrap">
   <a class="back" href="../index.html">← 資料一覧へ</a>
   <h1>マス目の座標</h1>
-  <p class="lead">マスの列と行の番号から、そのマスの中に描く正方形の左上の座標を求めます。マスをクリックするか、右のスライダーを動かして確かめられます。</p>
+  <p class="lead">マスの列と行の番号から、そのマスの中に描く正方形の座標と、マスの中心に描く円の座標を求めます。マスをクリックするか、右のスライダーを動かして確かめられます。</p>
 
   <div class="layout">
     <div class="fig">
-      <svg id="fig" viewBox="0 0 704 460" role="img" aria-label="6列4行のマス目に正方形を描いた図。選んだマスの正方形の始点 (x1, y1) と終点 (x2, y2) の座標を示し、始点の内訳を上と左の帯で示す。"></svg>
+      <svg id="fig" viewBox="0 0 704 460" role="img" aria-label="6列4行のマス目に正方形を描いた図。選んだマスの正方形の始点 (x1, y1) と終点 (x2, y2) の座標を示し、始点の内訳を上と左の帯で示す。各マスの中心には円を描く。"></svg>
       <div class="legend">
         <span><i class="dot"></i>原点 (0, 0) は左上</span>
         <span><i class="dot"></i>始点 (x1, y1) と終点 (x2, y2)</span>
@@ -101,6 +107,7 @@ h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 4px; text-wrap: balance; }
         <span><i style="background:var(--c-blue)"></i>番号 × マスの大きさ</span>
         <span><i style="background:var(--c-amber)"></i>マス内の余白</span>
         <span><i style="background:var(--c-teal)"></i>正方形</span>
+        <span><i style="background:var(--c-violet);border-radius:50%"></i>円(中心はマスの中心)</span>
       </div>
       <div class="probe" id="probe" aria-live="off"></div>
     </div>
@@ -116,6 +123,8 @@ h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 4px; text-wrap: balance; }
         <div class="ctl"><label for="gy">上の余白 <code>gy</code></label><output id="o-gy" for="gy"></output><input id="gy" type="range" min="0" max="64" step="4" value="24"></div>
         <div class="ctl"><label for="cs">マスの大きさ <code>c</code></label><output id="o-cs" for="cs"></output><input id="cs" type="range" min="40" max="80" step="4" value="64"></div>
         <div class="ctl"><label for="s">正方形の大きさ <code>s</code></label><output id="o-s" for="s"></output><input id="s" type="range" min="8" max="64" step="4" value="40"></div>
+        <div class="sub">円</div>
+        <div class="ctl"><label for="r">円の半径 <code>r</code></label><output id="o-r" for="r"></output><input id="r" type="range" min="2" max="32" step="2" value="16"></div>
       </div>
 
       <div class="card">
@@ -129,17 +138,28 @@ h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 4px; text-wrap: balance; }
         <div class="eq num" id="fx2"></div>
         <div class="code" id="code"></div>
       </div>
+
+      <div class="card">
+        <h2>DrawCircleの引数</h2>
+        <div class="eq"><span class="k">cx</span> = <span class="g">gx</span> + <span class="b">col × c</span> + <span class="v">c ÷ 2</span></div>
+        <div class="eq"><span class="k">cy</span> = <span class="g">gy</span> + <span class="b">row × c</span> + <span class="v">c ÷ 2</span></div>
+        <div class="eq"><span class="k">r</span> ≤ c ÷ 2&nbsp; (マスからはみ出さない)</div>
+        <div class="sub">いまの値で計算すると</div>
+        <div class="eq num" id="ccx"></div>
+        <div class="eq num" id="ccy"></div>
+        <div class="code" id="ccode"></div>
+      </div>
     </div>
   </div>
 
-  <p class="note">DrawBoxには左上 (x1, y1) と右下 (x2, y2) を渡します。塗りつぶしでは右端と下端の座標は含まれないため、x2 = x1 + s、y2 = y1 + s とすると、ちょうど s × s ピクセルの正方形になります。正方形をマスの中央に置くので、マスの左上から (c − s) ÷ 2 だけ内側にずらしています。マスの左上へ合わせたいときは、この余白の項を 0 にします。</p>
+  <p class="note">DrawBoxには左上 (x1, y1) と右下 (x2, y2) を渡します。塗りつぶしでは右端と下端の座標は含まれないため、x2 = x1 + s、y2 = y1 + s とすると、ちょうど s × s ピクセルの正方形になります。正方形をマスの中央に置くので、マスの左上から (c − s) ÷ 2 だけ内側にずらしています。マスの左上へ合わせたいときは、この余白の項を 0 にします。DrawCircleには中心 (cx, cy) と半径 r を渡します。中心はマスの左上からマスの大きさの半分だけ進んだ位置で、正方形の中心 (x1 + s ÷ 2, y1 + s ÷ 2) とも一致します。</p>
 </div>
 
 <script>
 (function () {
   var W = 560, H = 384, SX = 76, SY = 44, COLS = 6, ROWS = 4;
-  var st = { gx: 24, gy: 24, cs: 64, s: 40, col: 2, row: 1 };
-  var keys = ['gx', 'gy', 'cs', 's', 'col', 'row'];
+  var st = { gx: 24, gy: 24, cs: 64, s: 40, r: 16, col: 2, row: 1 };
+  var keys = ['gx', 'gy', 'cs', 's', 'r', 'col', 'row'];
   var svg = document.getElementById('fig');
   var inp = {}, out = {};
 
@@ -148,7 +168,10 @@ h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 4px; text-wrap: balance; }
     out[k] = document.getElementById('o-' + k);
     inp[k].addEventListener('input', function () {
       st[k] = +inp[k].value;
-      if (k === 'cs' && st.s > st.cs) st.s = st.cs;
+      if (k === 'cs') {
+        if (st.s > st.cs) st.s = st.cs;
+        if (st.r > st.cs / 2) st.r = st.cs / 2;
+      }
       sync();
       render();
     });
@@ -156,6 +179,7 @@ h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 4px; text-wrap: balance; }
 
   function sync() {
     inp.s.max = st.cs;
+    inp.r.max = st.cs / 2;
     keys.forEach(function (k) {
       inp[k].value = st[k];
       out[k].textContent = st[k];
@@ -245,6 +269,19 @@ h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 4px; text-wrap: balance; }
       if (a[1] > 0) bars += '<rect x="56" y="' + (SY + a[0]) + '" width="12" height="' + a[1] + '" fill="' + a[2] + '"/>';
     });
 
+    var hc = cs / 2, rr = st.r;
+    var CX = gx + col * cs + hc, CY = gy + row * cs + hc;
+    var circles = '', selCircle = '', ri, ci;
+    for (ri = 0; ri < ROWS; ri++) {
+      for (ci = 0; ci < COLS; ci++) {
+        var isSel = (ri === row && ci === col);
+        var ccx = SX + gx + ci * cs + hc, ccy = SY + gy + ri * cs + hc;
+        var circ = '<circle class="dc' + (isSel ? ' sel' : '') + '" cx="' + ccx + '" cy="' + ccy + '" r="' + rr + '"/>';
+        if (isSel) selCircle = circ; else circles += circ;
+      }
+    }
+    circles += selCircle + '<circle cx="' + (SX + CX) + '" cy="' + (SY + CY) + '" r="2.5" fill="var(--surface)"/>';
+
     var late = (SX + X) > (SX + W - 90);
     var xlabel = '<text class="val" x="' + (late ? SX + X + s : SX + X) + '" y="14" text-anchor="' + (late ? 'end' : 'start') + '">x1 = ' + X + '</text>';
     var ylabel = '<text class="val" x="0" y="' + (SY + Y + 4) + '">y1 = ' + Y + '</text>';
@@ -262,7 +299,7 @@ h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 4px; text-wrap: balance; }
 
     svg.innerHTML =
       '<rect x="' + SX + '" y="' + SY + '" width="' + W + '" height="' + H + '" fill="var(--surface)" stroke="var(--line)"/>' +
-      cells + sqs + selSq + guides + guides2 + bars + xlabel + ylabel + x2label + y2label +
+      cells + sqs + selSq + circles + guides + guides2 + bars + xlabel + ylabel + x2label + y2label +
       '<circle cx="' + (SX + X) + '" cy="' + (SY + Y) + '" r="3" fill="var(--fg)"/>' +
       '<circle cx="' + (SX + X + s) + '" cy="' + (SY + Y + s) + '" r="3" fill="var(--fg)"/>' +
       '<circle cx="' + SX + '" cy="' + SY + '" r="4" fill="var(--fg)"/>';
@@ -275,6 +312,11 @@ h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 4px; text-wrap: balance; }
       '<span class="k">x2</span> = ' + X + ' + ' + s + ' = <strong class="t">' + (X + s) + '</strong><br>' +
       '<span class="k">y2</span> = ' + Y + ' + ' + s + ' = <strong class="t">' + (Y + s) + '</strong><br>' +
       '始点 (' + X + ', ' + Y + ') → 終点 (' + (X + s) + ', ' + (Y + s) + ')';
+    document.getElementById('ccx').innerHTML =
+      '<span class="k">cx</span> = <span class="g">' + gx + '</span> + <span class="b">' + col + ' × ' + cs + '</span> + <span class="v">' + cs + ' ÷ 2</span> = <strong class="t">' + CX + '</strong>';
+    document.getElementById('ccy').innerHTML =
+      '<span class="k">cy</span> = <span class="g">' + gy + '</span> + <span class="b">' + row + ' × ' + cs + '</span> + <span class="v">' + cs + ' ÷ 2</span> = <strong class="t">' + CY + '</strong>';
+    document.getElementById('ccode').textContent = 'DrawCircle(' + CX + ', ' + CY + ', ' + rr + ', color, TRUE);';
     document.getElementById('code').textContent = 'DrawBox(' + X + ', ' + Y + ', ' + (X + s) + ', ' + (Y + s) + ', color, TRUE);';
   }
 

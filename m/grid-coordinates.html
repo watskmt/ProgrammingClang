@@ -89,7 +89,27 @@ h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 4px; text-wrap: balance; }
 .note { margin: 20px 0 0; font-size: .86rem; color: var(--muted); max-width: 46em; }
 .back { display: inline-block; margin-bottom: 12px; font-family: var(--font-mono); font-size: .8rem; color: var(--c-blue); text-decoration: none; }
 .back:hover { text-decoration: underline; }
-@media (max-width: 860px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.explain { margin-top: 36px; display: grid; gap: 16px; min-width: 0; }
+.explain h2 { font-size: 1.25rem; font-weight: 700; margin: 0; }
+.explain h3 { font-size: 1rem; font-weight: 700; margin: 0 0 6px; }
+.explain p { margin: 0; max-width: 46em; }
+.explain .sec { display: grid; gap: 8px; min-width: 0; }
+.ex-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+#cellfig { cursor: default; }
+.halo { paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+.steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; min-width: 0; }
+.steps li { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; min-width: 0; }
+.steps li p { font-size: .9rem; margin-bottom: 6px; }
+.src { margin: 0; padding: 12px 14px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); font-family: var(--font-mono); font-size: .84rem; line-height: 1.7; overflow-x: auto; }
+.src.out { background: var(--bg); }
+.cap { font-size: .8rem; color: var(--muted); margin: 0; }
+.pts { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; max-width: 46em; font-size: .92rem; }
+.pts code, .explain p code { font-family: var(--font-mono); font-size: .88em; }
+.quiz { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; max-width: 46em; }
+.quiz summary { cursor: pointer; font-weight: 500; }
+.quiz summary:focus-visible { outline: 2px solid var(--c-teal); outline-offset: 3px; }
+.quiz .ans { margin-top: 8px; font-family: var(--font-mono); font-size: .86rem; line-height: 1.9; }
+@media (max-width: 860px) { .layout, .ex-grid { grid-template-columns: minmax(0, 1fr); } }
 </style>
 
 <div class="wrap">
@@ -151,6 +171,98 @@ h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 4px; text-wrap: balance; }
       </div>
     </div>
   </div>
+
+  <section class="explain" aria-labelledby="ex-h">
+    <h2 id="ex-h">円の中心の求め方</h2>
+    <p>円は「中心の座標」と「半径」で決まります。DrawBoxのように左上と右下を求める必要はなく、マスの中心の1点が分かれば描けます。下の4つの手順で求めます。設定のスライダーやマスの選択を変えると、図と計算が更新されます。</p>
+
+    <div class="ex-grid">
+      <div class="fig">
+        <svg id="cellfig" viewBox="0 0 430 300" role="img" aria-label="選んだマス1つを拡大した図。マスの左上から右へ c÷2、下へ c÷2 進んだ点が円の中心になることを示す。"></svg>
+        <div class="legend">
+          <span><i style="background:var(--c-blue)"></i>マス</span>
+          <span><i style="background:var(--c-teal)"></i>正方形</span>
+          <span><i style="background:var(--c-violet);border-radius:50%"></i>円</span>
+          <span><i class="dot"></i>マスの左上と円の中心</span>
+        </div>
+        <p class="cap" id="capcell"></p>
+      </div>
+
+      <ol class="steps">
+        <li>
+          <h3>1. マスの左上を求める</h3>
+          <p>マス目は (gx, gy) から始まり、1マスの大きさは c です。右へ col マス、下へ row マス進んだ位置が、選んだマスの左上です。</p>
+          <div class="eq" id="e1"></div>
+        </li>
+        <li>
+          <h3>2. 中心までの距離を考える</h3>
+          <p>マスは縦も横も c の正方形なので、中心は左上から右へ c ÷ 2、下へ c ÷ 2 進んだ点です。</p>
+          <div class="eq" id="e2"></div>
+        </li>
+        <li>
+          <h3>3. 足し合わせる</h3>
+          <p>手順1の左上に、手順2の c ÷ 2 を足したものが円の中心 (cx, cy) です。これを DrawCircle の x、y に渡します。</p>
+          <div class="eq" id="e3"></div>
+        </li>
+        <li>
+          <h3>4. 半径を決める</h3>
+          <p>半径 r は、円がマスからはみ出さないように c ÷ 2 以下にします。c ÷ 2 ちょうどなら円がマスに内接し、正方形に収めたいときは s ÷ 2 にします。</p>
+          <div class="eq" id="e4"></div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="sec">
+      <h3>別の求め方: 正方形の中心から</h3>
+      <p>正方形をマスの中央に置いているなら、正方形の中心を求めても同じ点になります。DrawBoxの左上 x1 に s ÷ 2 を足し、式を整理すると手順3の式になります。</p>
+      <pre class="src">x1 + s ÷ 2 = (gx + col × c + (c − s) ÷ 2) + s ÷ 2
+           = gx + col × c + (c − s + s) ÷ 2
+           = gx + col × c + c ÷ 2
+           = cx</pre>
+      <div class="eq" id="e5"></div>
+    </div>
+
+    <div class="sec">
+      <h3>C言語での書き方</h3>
+      <p>全マスの中心に円を描く例です。行と列のループの中で、手順3の式をそのまま書きます。</p>
+      <pre class="src">const int gx = 24, gy = 24;   // マス目の左上
+const int c  = 64;            // マスの大きさ
+const int r  = 16;            // 円の半径
+const unsigned int white = GetColor(255, 255, 255);
+
+for (int row = 0; row &lt; 4; row++) {
+    for (int col = 0; col &lt; 6; col++) {
+        int cx = gx + col * c + c / 2;
+        int cy = gy + row * c + c / 2;
+        DrawCircle(cx, cy, r, white, TRUE);
+    }
+}</pre>
+      <p class="cap">DrawCircle の呼び出しを座標の表示に置き換えて実行した結果(gcc -Wall -Wextra で警告なし)。各行が1行分のマスの中心 (cx, cy) です。</p>
+      <pre class="src out">( 56, 56) (120, 56) (184, 56) (248, 56) (312, 56) (376, 56)
+( 56,120) (120,120) (184,120) (248,120) (312,120) (376,120)
+( 56,184) (120,184) (184,184) (248,184) (312,184) (376,184)
+( 56,248) (120,248) (184,248) (248,248) (312,248) (376,248)</pre>
+      <p>cx は列が1つ進むたびに 64(= c)ずつ、cy は行が1つ進むたびに 64 ずつ増えています。</p>
+    </div>
+
+    <div class="sec">
+      <h3>つまずきやすい点</h3>
+      <ul class="pts">
+        <li><code>c / 2</code> は int 同士の割り算なので、小数点以下が切り捨てられます。c が奇数で 45 のとき、<code>45 / 2</code> は 22.5 ではなく 22 です。中心が 0.5 ピクセルずれるので、c は偶数にしておくと確実です。この資料のスライダーは、c を4刻みにしています。</li>
+        <li>DrawBoxの引数は左上と右下の2点、DrawCircleの引数は中心と半径です。円に (c − s) ÷ 2 の余白を足す必要はありません。余白を足すと、中心が左上へずれます。</li>
+        <li>列と行の番号は 0 から数えます。1列目は col = 0 です。</li>
+        <li>半径を c ÷ 2 より大きくすると、円が隣のマスにはみ出します。</li>
+      </ul>
+    </div>
+
+    <div class="sec">
+      <h3>確認問題</h3>
+      <details class="quiz">
+        <summary>gx = 10、gy = 20、c = 50 のとき、列 3、行 2(どちらも0始まり)のマスの中心 (cx, cy) は?</summary>
+        <div class="ans">cx = 10 + 3 × 50 + 50 ÷ 2 = 185<br>cy = 20 + 2 × 50 + 50 ÷ 2 = 145<br>答え: (185, 145)</div>
+      </details>
+    </div>
+  </section>
 
   <p class="note">DrawBoxには左上 (x1, y1) と右下 (x2, y2) を渡します。塗りつぶしでは右端と下端の座標は含まれないため、x2 = x1 + s、y2 = y1 + s とすると、ちょうど s × s ピクセルの正方形になります。正方形をマスの中央に置くので、マスの左上から (c − s) ÷ 2 だけ内側にずらしています。マスの左上へ合わせたいときは、この余白の項を 0 にします。DrawCircleには中心 (cx, cy) と半径 r を渡します。中心はマスの左上からマスの大きさの半分だけ進んだ位置で、正方形の中心 (x1 + s ÷ 2, y1 + s ÷ 2) とも一致します。</p>
 </div>
@@ -312,6 +424,44 @@ h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 4px; text-wrap: balance; }
       '<span class="k">x2</span> = ' + X + ' + ' + s + ' = <strong class="t">' + (X + s) + '</strong><br>' +
       '<span class="k">y2</span> = ' + Y + ' + ' + s + ' = <strong class="t">' + (Y + s) + '</strong><br>' +
       '始点 (' + X + ', ' + Y + ') → 終点 (' + (X + s) + ', ' + (Y + s) + ')';
+    var kz = 220 / cs, bx = 90, by = 50, cw = 220;
+    var csx = bx + hc * kz, csy = by + hc * kz;
+    var ax = by - 14, ay = bx - 14;
+    document.getElementById('cellfig').innerHTML =
+      '<defs><marker id="arw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>' +
+      '<rect x="' + bx + '" y="' + by + '" width="' + cw + '" height="' + cw + '" fill="var(--surface)" stroke="var(--c-blue)" stroke-width="1.5"/>' +
+      '<rect class="sq" x="' + (bx + pad * kz) + '" y="' + (by + pad * kz) + '" width="' + (s * kz) + '" height="' + (s * kz) + '"/>' +
+      '<circle class="dc" cx="' + csx + '" cy="' + csy + '" r="' + (rr * kz) + '"/>' +
+      '<line class="guide" x1="' + bx + '" y1="' + csy + '" x2="' + (bx + cw + 6) + '" y2="' + csy + '"/>' +
+      '<line class="guide" x1="' + csx + '" y1="' + by + '" x2="' + csx + '" y2="' + csy + '"/>' +
+      '<line x1="' + bx + '" y1="' + ax + '" x2="' + csx + '" y2="' + ax + '" stroke="var(--c-violet)" stroke-width="1.5" marker-start="url(#arw)" marker-end="url(#arw)"/>' +
+      '<line x1="' + ay + '" y1="' + by + '" x2="' + ay + '" y2="' + csy + '" stroke="var(--c-violet)" stroke-width="1.5" marker-start="url(#arw)" marker-end="url(#arw)"/>' +
+      '<text class="val" x="' + ((bx + csx) / 2) + '" y="' + (ax - 6) + '" text-anchor="middle">c ÷ 2 = ' + hc + '</text>' +
+      '<text class="val" x="' + (ay - 6) + '" y="' + ((by + csy) / 2 + 4) + '" text-anchor="end">c ÷ 2 = ' + hc + '</text>' +
+      '<line x1="' + csx + '" y1="' + csy + '" x2="' + csx + '" y2="' + (csy - rr * kz) + '" stroke="var(--c-violet)" stroke-width="2"/>' +
+      '<text class="val halo" x="' + (csx + 8) + '" y="' + (csy - rr * kz / 2 + 4) + '">r = ' + rr + '</text>' +
+      '<circle cx="' + bx + '" cy="' + by + '" r="4" fill="var(--fg)"/>' +
+      '<circle cx="' + csx + '" cy="' + csy + '" r="4" fill="var(--fg)"/>' +
+      '<line class="guide" x1="' + bx + '" y1="' + by + '" x2="58" y2="22"/>' +
+      '<text class="val" x="0" y="14">マスの左上 (' + (gx + col * cs) + ', ' + (gy + row * cs) + ')</text>' +
+      '<text class="val" x="' + (bx + cw + 10) + '" y="' + (csy + 4) + '">中心 (' + CX + ', ' + CY + ')</text>';
+    document.getElementById('capcell').textContent = '選んだマス(列 ' + col + '、行 ' + row + ')を ' + (Math.round(kz * 100) / 100) + ' 倍に拡大しています。';
+
+    var x0 = gx + col * cs, y0 = gy + row * cs;
+    document.getElementById('e1').innerHTML =
+      '<span class="k">x0</span> = <span class="g">' + gx + '</span> + <span class="b">' + col + ' × ' + cs + '</span> = <strong class="t">' + x0 + '</strong><br>' +
+      '<span class="k">y0</span> = <span class="g">' + gy + '</span> + <span class="b">' + row + ' × ' + cs + '</span> = <strong class="t">' + y0 + '</strong>';
+    document.getElementById('e2').innerHTML =
+      '<span class="v">c ÷ 2</span> = ' + cs + ' ÷ 2 = <strong class="t">' + hc + '</strong>';
+    document.getElementById('e3').innerHTML =
+      '<span class="k">cx</span> = ' + x0 + ' + <span class="v">' + hc + '</span> = <strong class="t">' + CX + '</strong><br>' +
+      '<span class="k">cy</span> = ' + y0 + ' + <span class="v">' + hc + '</span> = <strong class="t">' + CY + '</strong>';
+    document.getElementById('e4').innerHTML =
+      '<span class="k">r</span> ≤ <span class="v">c ÷ 2</span> = <strong class="t">' + hc + '</strong>,&nbsp; s ÷ 2 = <strong class="t">' + (s / 2) + '</strong><br>' +
+      'いまの <span class="k">r</span> = <strong class="t">' + rr + '</strong>';
+    document.getElementById('e5').innerHTML =
+      '<span class="k">x1</span> + s ÷ 2 = ' + X + ' + ' + (s / 2) + ' = <strong class="t">' + (X + s / 2) + '</strong><br>' +
+      '<span class="k">y1</span> + s ÷ 2 = ' + Y + ' + ' + (s / 2) + ' = <strong class="t">' + (Y + s / 2) + '</strong>';
     document.getElementById('ccx').innerHTML =
       '<span class="k">cx</span> = <span class="g">' + gx + '</span> + <span class="b">' + col + ' × ' + cs + '</span> + <span class="v">' + cs + ' ÷ 2</span> = <strong class="t">' + CX + '</strong>';
     document.getElementById('ccy').innerHTML =

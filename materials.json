@@ -1,5 +1,12 @@
 [
   {
+    "slug": "sg90-servo-pwm",
+    "title": "SG90サーボモーターの制御信号(PWM)",
+    "tag": "電子工作",
+    "date": "2026-10-19",
+    "summary": "周期20msのPWM信号のHigh時間で角度が決まる仕組みを、タイミング図とCの計算で確かめる。"
+  },
+  {
     "slug": "grid-coordinates",
     "title": "マス目の座標",
     "tag": "描画",

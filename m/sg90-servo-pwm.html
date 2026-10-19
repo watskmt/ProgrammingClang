@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SG90サーボモーターの制御信号(PWM) - C言語 参考資料</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+:root {
+  --bg: #F2F5F8;
+  --surface: #FFFFFF;
+  --fg: #1B2733;
+  --muted: #5B6B7B;
+  --line: #CBD5DF;
+  --c-blue: #3558C9;
+  --c-amber: #B86A00;
+  --c-teal: #0B7A85;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10161D;
+    --surface: #18212B;
+    --fg: #E6EDF3;
+    --muted: #93A3B3;
+    --line: #2C3946;
+    --c-blue: #85A0F5;
+    --c-amber: #F0A94B;
+    --c-teal: #3CC2CE;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10161D;
+  --surface: #18212B;
+  --fg: #E6EDF3;
+  --muted: #93A3B3;
+  --line: #2C3946;
+  --c-blue: #85A0F5;
+  --c-amber: #F0A94B;
+  --c-teal: #3CC2CE;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.8; padding-inline: 16px; padding-block: 24px 40px; }
+.wrap { max-width: 860px; margin-inline: auto; }
+h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 4px; text-wrap: balance; }
+h2 { font-size: 1.15rem; font-weight: 700; margin: 32px 0 8px; }
+p { margin: 0 0 12px; }
+.lead { color: var(--muted); max-width: 40em; margin-bottom: 20px; }
+.back { display: inline-block; margin-bottom: 12px; font-family: var(--font-mono); font-size: .8rem; color: var(--c-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+.fig svg { display: block; width: 100%; height: auto; }
+.fig .cap { margin: 8px 4px 0; font-size: .84rem; color: var(--muted); }
+.ax { stroke: var(--fg); stroke-width: 1; fill: none; }
+.guide { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.wave { fill: none; stroke-width: 2.5; stroke-linejoin: round; }
+.t { font-family: var(--font-body); font-size: 13px; fill: var(--fg); }
+.tm { font-family: var(--font-mono); font-size: 12px; fill: var(--muted); }
+.tb { font-family: var(--font-body); font-size: 14px; font-weight: 700; fill: var(--fg); }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+th { font-weight: 700; color: var(--muted); font-size: .8rem; }
+td.n { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.tw { overflow-x: auto; }
+code { font-family: var(--font-mono); font-size: .88em; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+.codewrap { position: relative; }
+pre { margin: 0 0 12px; padding: 12px 14px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); overflow-x: auto; font-family: var(--font-mono); font-size: .84rem; line-height: 1.6; }
+pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+.copy { position: absolute; top: 6px; right: 6px; font-family: var(--font-mono); font-size: .72rem; color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+.copy:hover { color: var(--fg); }
+.label { font-size: .78rem; font-weight: 500; color: var(--muted); margin: 14px 0 4px; }
+ul { margin: 0 0 12px; padding-left: 1.3em; }
+li { margin-bottom: 4px; }
+details { margin-bottom: 8px; }
+summary { cursor: pointer; font-weight: 500; }
+.foot { margin-top: 40px; font-size: .78rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../index.html">← 資料一覧へ</a>
+  <h1>SG90サーボモーターの制御信号(PWM)</h1>
+  <p class="lead">小型サーボモーターSG90は、20msごとに繰り返す信号の「Highの長さ」で角度が決まります。この資料では、その信号の形と、角度からパルス幅を求めるC言語の計算を確かめます。</p>
+
+  <h2>前提知識</h2>
+  <ul>
+    <li><strong>PWM</strong>(パルス幅変調)は、一定の周期でHigh(5Vや3.3V)とLow(0V)を切り替え、Highの長さで情報を伝える方法です。</li>
+    <li><strong>デューティ比</strong>は、1周期のうちHighである時間の割合です。たとえば周期20msでHighが1ms続けば、デューティ比は 1 ÷ 20 = 5% です。</li>
+    <li>SG90の配線は3本で、茶(または黒)がGND、赤が電源(5V)、オレンジ(または黄)が信号線です。</li>
+  </ul>
+
+  <h2>制御信号の図</h2>
+  <div class="card fig">
+    <svg viewBox="0 0 680 400" role="img" aria-label="SG90の制御信号のタイミング図。周期20msのPWM信号で、High時間が0.5msなら0度、1.5msなら90度、2.4msなら180度になる。">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+      </defs>
+      <line class="guide" x1="140" y1="50" x2="140" y2="350"/>
+      <line class="guide" x1="620" y1="50" x2="620" y2="350"/>
+
+      <text class="t" x="380" y="24" text-anchor="middle">周期 20 ms(50 Hz)</text>
+      <line class="ax" x1="144" y1="40" x2="616" y2="40" marker-start="url(#ah)" marker-end="url(#ah)"/>
+
+      <text class="tb" x="24" y="83">0°</text>
+      <text class="t" x="24" y="101">最小位置</text>
+      <path class="wave" style="stroke:var(--c-teal)" d="M140 115 V75 H152 V115 H620 V75 H640"/>
+      <text class="t" x="164" y="96">High 0.5 ms(デューティ比 2.5%)</text>
+
+      <text class="tb" x="24" y="183">90°</text>
+      <text class="t" x="24" y="201">中央位置</text>
+      <path class="wave" style="stroke:var(--c-blue)" d="M140 215 V175 H176 V215 H620 V175 H640"/>
+      <text class="t" x="188" y="196">High 約1.5 ms(デューティ比 約7.5%)</text>
+
+      <text class="tb" x="24" y="283">180°</text>
+      <text class="t" x="24" y="301">最大位置</text>
+      <path class="wave" style="stroke:var(--c-amber)" d="M140 315 V275 H198 V315 H620 V275 H640"/>
+      <text class="t" x="210" y="296">High 2.4 ms(デューティ比 12%)</text>
+
+      <line class="ax" x1="140" y1="350" x2="650" y2="350" marker-end="url(#ah)"/>
+      <line class="ax" x1="140" y1="350" x2="140" y2="356"/>
+      <line class="ax" x1="260" y1="350" x2="260" y2="356"/>
+      <line class="ax" x1="380" y1="350" x2="380" y2="356"/>
+      <line class="ax" x1="500" y1="350" x2="500" y2="356"/>
+      <line class="ax" x1="620" y1="350" x2="620" y2="356"/>
+      <text class="tm" x="140" y="374" text-anchor="middle">0</text>
+      <text class="tm" x="260" y="374" text-anchor="middle">5</text>
+      <text class="tm" x="380" y="374" text-anchor="middle">10</text>
+      <text class="tm" x="500" y="374" text-anchor="middle">15</text>
+      <text class="tm" x="620" y="374" text-anchor="middle">20 ms</text>
+    </svg>
+    <p class="cap">横軸は時間(ms)。周期は20msのまま変わらず、Highの長さだけが角度に対応します。</p>
+  </div>
+
+  <h2>角度とパルス幅の対応</h2>
+  <div class="card tw">
+    <table>
+      <thead><tr><th>角度</th><th>パルス幅</th><th>デューティ比</th></tr></thead>
+      <tbody>
+        <tr><td class="n">0°</td><td class="n">0.5 ms</td><td class="n">2.5%</td></tr>
+        <tr><td class="n">90°</td><td class="n">約1.5 ms</td><td class="n">約7.5%</td></tr>
+        <tr><td class="n">180°</td><td class="n">2.4 ms</td><td class="n">12%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top:12px">中央のパルス幅は、0°を0.5ms、180°を2.4msとして直線で結ぶと 1.45ms になります。一般的な目安は1.5msです。この差は個体差の範囲に収まるため、実機では動かして調整します。可動範囲の端で「ジー」と唸るときは、最小・最大のパルス幅を少し内側にしてください。</p>
+
+  <h2>C言語で角度からパルス幅を求める</h2>
+  <p>角度をそのままPWMの設定値にはできないので、まず「0〜180度」を「500〜2400µs」に直線で対応づける関数を作ります。整数の割り算は小数点以下を切り捨てることに注意してください。</p>
+  <div class="codewrap">
+<button class="copy" type="button" data-target="code1">コピー</button>
+<pre><code id="code1">#include &lt;stdio.h&gt;
+
+#define PULSE_MIN_US 500   /* 0度のときのパルス幅(マイクロ秒) */
+#define PULSE_MAX_US 2400  /* 180度のときのパルス幅(マイクロ秒) */
+#define PERIOD_US    20000 /* PWMの周期(20ms = 50Hz) */
+
+/* 角度(0〜180)をパルス幅(マイクロ秒)に変換する */
+int angle_to_pulse_us(int angle)
+{
+    if (angle &lt; 0)   angle = 0;
+    if (angle &gt; 180) angle = 180;
+    return PULSE_MIN_US + (PULSE_MAX_US - PULSE_MIN_US) * angle / 180;
+}
+
+int main(void)
+{
+    int angle;
+
+    printf("角度  パルス幅[us]  デューティ比[%%]\n");
+    for (angle = 0; angle &lt;= 180; angle += 45) {
+        int pulse = angle_to_pulse_us(angle);
+        double duty = 100.0 * pulse / PERIOD_US;
+        printf("%3d   %6d        %5.2f\n", angle, pulse, duty);
+    }
+    return 0;
+}</code></pre>
+  </div>
+  <div class="label">実行結果(gcc -Wall -Wextra で確認)</div>
+<pre><code>角度  パルス幅[us]  デューティ比[%]
+  0      500         2.50
+ 45      975         4.88
+ 90     1450         7.25
+135     1925         9.62
+180     2400        12.00</code></pre>
+  <p>ArduinoのServoライブラリでは、<code>attach(ピン, 500, 2400)</code> のように最小・最大のパルス幅を渡し、<code>write(角度)</code> で角度を指定します。内部では、ここで書いた計算と同じことをしています。</p>
+
+  <h2>配線のときの注意</h2>
+  <ul>
+    <li>電源は外部の5Vを使うのがおすすめです。マイコンの5Vピンから直接取ると、動き出すときの電流でリセットされることがあります。</li>
+    <li>外部電源を使うときは、マイコンとサーボのGNDをつなぎます。</li>
+    <li>負荷をかけたまま長時間止めておくと、発熱や故障の原因になります。</li>
+  </ul>
+
+  <h2>よくある間違い</h2>
+  <ul>
+    <li>周期まで変えてしまう。変えるのはHighの長さだけで、周期は20msのままにします。</li>
+    <li>デューティ比の単位を取り違える。ms と µs と % を混ぜず、計算の前に単位をそろえます。</li>
+    <li>0〜180を超える角度をそのまま渡す。上の関数のように範囲内に収めてから計算します。</li>
+  </ul>
+
+  <h2>確認問題</h2>
+  <details>
+    <summary>問1 周期20msで、Highが1.0msのとき、デューティ比は何%ですか。</summary>
+    <p>1.0 ÷ 20 = 0.05 なので 5% です。</p>
+  </details>
+  <details>
+    <summary>問2 上のプログラムで、angle_to_pulse_us(60) はいくつを返しますか。</summary>
+    <p>500 + (2400 − 500) × 60 ÷ 180 = 500 + 1900 × 60 ÷ 180 = 500 + 633 = 1133 です。整数の割り算なので、633.33… の小数部分は切り捨てられます。</p>
+  </details>
+
+  <div class="foot">C言語 参考資料</div>
+</div>
+<script>
+document.querySelectorAll('.copy').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var el = document.getElementById(b.getAttribute('data-target'));
+    var done = function () { b.textContent = 'コピーしました'; setTimeout(function () { b.textContent = 'コピー'; }, 1500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(el.textContent).then(done, function () {});
+    }
+  });
+});
+</script>
+</body>
+</html>
